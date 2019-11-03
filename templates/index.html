@@ -1,12 +1,16 @@
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
 {% block title %}Mr.Mooon{% endblock %}
 
 {% block content %}
 <div class="page-header">
-	<h1>Hello world!</h1>
-	<p>The local data and time is {{ moment(current_time).format('LLL')}}.</p>
+	<h1>你好，{% if name %}{{ name }}{% else %}陌生人！{% endif %}!</h1>
+</div>
+	{{ wtf.quick_form(form) }}
+</div>
+<div class="time">
+	<p>当地时间为 {{ moment(current_time).format('YYYY年M月D日, h:mm:ss a')}}.</p>
 	<p>That was {{ moment(current_time).fromNow(refresh=True) }}</p>
-	<p>{{ current_time }}</p>
 </div>
 {% endblock %}
