@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session, redirect, url_for
+from flask import Flask, render_template, session, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from datetime import datetime
@@ -17,6 +17,9 @@ def index():
 	form = NameForm()
 	# 验证提交的表单元素
 	if form.validate_on_submit():
+		old_name = session.get('name')
+		if old_name is not None and old_name != form.name.data:
+			flash('你好像换了个名字！')
 		session['name'] = form.name.data # 将表单接受到的字符串存储在 用户会话 session 字典中
 		return redirect(url_for('index'))
 	return render_template('index.html', current_time=datetime.utcnow(), form = form, name = session.get('name'))
