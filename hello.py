@@ -5,12 +5,22 @@ from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+import os
+from flask_sqlalchemy import SQLAlchemy
 
+# 当前文件夹的绝对路径？
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+#设置配置变量
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.jion(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'hard to guess string'
+
+#初始化app
 bootstrap = Bootstrap(app)
 moment = Moment(app)
-
+db = SQLAlchemy(app)
 
 @app.route('/', methods=['GET','POST'])
 def index():
