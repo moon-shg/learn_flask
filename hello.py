@@ -22,6 +22,11 @@ bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
 
+#添加一个shell上下文，让 flask shell 自动导入数据库实例和模型
+@app.shell_context_processor
+def make_shell_context():
+	return dict(db=db, User=User, Role=Role)
+
 #设置路由表
 @app.route('/', methods=['GET','POST'])
 def index():
