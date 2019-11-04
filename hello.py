@@ -40,3 +40,21 @@ class NameForm(FlaskForm):
 	# Validator 为验证函数组成的列表，其中DataRequired（）函数确保提交内容不为空
 	name = StringField("你的名字是？", validators=[DataRequired()])
 	submit = SubmitField('确认')
+
+class Role(db.Model):
+	__tablename__ = 'roles'
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(64), unique=True)
+	users = db.relationship('User', backref='role')
+
+	def __repr__(self):
+		return '<Role %r>' % self.name
+
+class User(db.Model):
+	__tablename__ = 'users'
+	id = db.Column(db.Integer, primary_key=True)
+	username = db.Column(db.String(64), unique=True, index=True)
+	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+
+	def __repr__(self):
+		return '<User %r>' % self.username
