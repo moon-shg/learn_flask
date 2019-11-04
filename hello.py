@@ -8,6 +8,8 @@ from wtforms.validators import DataRequired
 import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_mail import Mail, Message
+from threading import Thread
 
 # 当前文件夹的绝对路径？
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -18,11 +20,22 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'da
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'hard to guess string'
 
+#配置Flask-Mail使用QQ邮箱
+app.config['MAIL_SERVER'] = 'smtp.qq.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[孙彤]'
+app.config['FLASKY_MAIL_SENDER'] = 'ST<393773661@qq.com>'
+app.config['FLASKY_ADMIN'] = os.environ.get('FLASKY_ADMIN')
+
 #初始化app
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+mail = Mail(app)
 
 #添加一个shell上下文，让 flask shell 自动导入数据库实例和模型
 @app.shell_context_processor
@@ -41,6 +54,8 @@ def index():
 			db.session.add(user)
 			db.session.commit()
 			session['known'] = False
+			if app.config['FLASKY_ADMIN']:
+				send_email(app.config['FLASKY_ADMIN'], 'NEW USER', 'mail/new_user', user = user)
 		else: 
 			session['known'] = True
 		session['name'] = form.name.data # 将表单接受到的字符串存储在 用户会话 session 字典中
@@ -63,6 +78,20 @@ def page_not_found(e):
 @app.errorhandler(500)
 def page_not_found(e):
     return render_template('500.html'), 500
+
+#创建异步发送邮件的函数，使处理发送邮件的请求在后台线程中运行
+def send_async_email(app, msg): 
+	with app.app_context():
+		mail.send(msg)
+
+def send_email(to, subject, template, **kwargs):
+	msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject, \
+		sender = app.config['FLASKY_MAIL_SENDER'], recipients=[to])
+	msg.body = render_template(template + '.txt', **kwargs)
+	msg.html = render_template(template + '.html', **kwargs)
+	thr = Thread(target=send_async_email, args=[app, msg])
+	thr.start()
+	return thr
 
 #创建一个表单
 class NameForm(FlaskForm):
