@@ -7,6 +7,7 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 import os
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # 当前文件夹的绝对路径？
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -21,6 +22,7 @@ app.config['SECRET_KEY'] = 'hard to guess string'
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 #添加一个shell上下文，让 flask shell 自动导入数据库实例和模型
 @app.shell_context_processor
