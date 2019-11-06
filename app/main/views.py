@@ -1,5 +1,5 @@
 from datetime import datetime
-from flash import render_template, session, redirect, url_for, current_app
+from flask import render_template, session, redirect, url_for, current_app
 from . import main
 from .forms import NameForm
 from .. import db
@@ -30,6 +30,6 @@ def index():
 		return redirect(url_for('.index'))
 	return render_template('index.html', current_time=datetime.utcnow(), form = form, name = session.get('name'), known=session.get('known',False))
 
-@app.route('/user/<name>')
+@main.route('/user/<name>')
 def user(name):
 	return render_template('user.html', name=name)
