@@ -1,6 +1,8 @@
 from . import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask import current_app
 
 
 #创建一个数据库
@@ -21,6 +23,8 @@ class User(UserMixin, db.Model):
 	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 	# 生成密码散列
 	password_hash = db.Column(db.String(128))
+	# 账户认证状态
+	confirmed = db.Column(db.Boolean, default=False)
 	
 	@property
 	def password(self):
@@ -31,6 +35,23 @@ class User(UserMixin, db.Model):
 	
 	def verify_password(self, password):
 		return check_password_hash(self.password_hash, password)
+
+	# 确认用户账户
+	def generate_confirmation_token(self, expiration=3600):
+		s = Serializer(current_app.config['SECRET_KEY'], expiration)
+		return s.dumps({'confirm':self.id}).decode('utf-8')
+
+	def confirm(self, token):
+		s = Serializer(current_app.config['SECRET_KEY'])
+		try:
+			data = s.loads(token.encode('utf-8')) # data由上面s.dumps()函数定义，这里是一个字典
+		except:
+			return False
+		if data.get('confirm') != self.id:
+			return False
+		self.confirmed = True
+		db.session.add(self)
+		return True
 	
 	# 设置print()函数的输出格式
 	def __repr__(self):
