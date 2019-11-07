@@ -26,4 +26,8 @@ def create_app(config_name):
         from .main import main as main_blueprint
         app.register_blueprint(main_blueprint)
 
+	#添加密码验证的蓝本
+	from .auth import auth as auth_blueprint
+	app.register_blueprint(auth_blueprint, url_prefix='/auth')   # 添加指定前缀 /auth
+
         return app
