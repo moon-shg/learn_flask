@@ -1,7 +1,7 @@
 import unittest
 import time
 from app import create_app, db
-from app.models import User
+from app.models import User, Role, AnonymousUser, Permission
 
 
 class UserModelTestCase(unittest.TestCase):
@@ -10,6 +10,7 @@ class UserModelTestCase(unittest.TestCase):
 		self.app_context = self.app.app_context()
 		self.app_context.push()
 		db.create_all()
+		Role.insert_roles()
 
 	def tearDown(self):
 		db.session.remove()
@@ -61,3 +62,42 @@ class UserModelTestCase(unittest.TestCase):
 		token = u.generate_confirmation_token(1) #设置token的有效时间为1s
 		time.sleep(2)
 		self.assertFalse(u.confirm(token))
+
+
+	# 验证角色和权限
+	def test_user_role(self):
+		u = User(email='asdf@123.com', password='cat')
+		self.assertTrue(u.can(Permission.FOLLOW))
+		self.assertTrue(u.can(Permission.COMMENT))
+		self.assertTrue(u.can(Permission.WRITE))
+		self.assertFalse(u.can(Permission.MODERATE))
+		self.assertFalse(u.can(Permission.ADMIN))
+	
+	# 验证协管员用户权限
+	def test_moderator_user(self):
+		r = Role.query.filter_by(name='Moderator').first()
+		u = User(email='asdf@123.com', password='cat', role=r)
+		self.assertTrue(u.can(Permission.FOLLOW))
+		self.assertTrue(u.can(Permission.COMMENT))
+		self.assertTrue(u.can(Permission.WRITE))
+		self.assertTrue(u.can(Permission.MODERATE))
+		self.assertFalse(u.can(Permission.ADMIN))
+
+	# 验证管理员用户权限
+	def test_administrator_user(self):
+		r = Role.query.filter_by(name='Administrator').first()
+		u = User(email='asdf@123.com', password='cat', role=r)
+		self.assertTrue(u.can(Permission.FOLLOW))
+		self.assertTrue(u.can(Permission.COMMENT))
+		self.assertTrue(u.can(Permission.WRITE))
+		self.assertTrue(u.can(Permission.MODERATE))
+		self.assertTrue(u.can(Permission.ADMIN))
+
+	# 验证匿名用户权限
+	def test_anonymous_user(self):
+		u = AnonymousUser()
+		self.assertFalse(u.can(Permission.FOLLOW))
+		self.assertFalse(u.can(Permission.COMMENT))
+		self.assertFalse(u.can(Permission.WRITE))
+		self.assertFalse(u.can(Permission.MODERATE))
+		self.assertFalse(u.can(Permission.ADMIN))
