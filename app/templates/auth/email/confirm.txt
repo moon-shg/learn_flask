@@ -1,0 +1,6 @@
+尊敬的 {{ user.username }} :
+    欢迎来到Mr.mooon!
+    请点击下面的链接来激活您的账号：
+    {{ url_for('auth.confirm', token=token, _external=True) }}
+                                                                            Mr.mooon团队
+注：请不要回复这封邮件。
