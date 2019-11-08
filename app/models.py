@@ -153,7 +153,7 @@ class User(UserMixin, db.Model):
 
     # 刷新用户最后访问时间
     def ping(self):
-        self.last_seen = datetime.uctnow()
+        self.last_seen = datetime.utcnow()
         db.session.add(self)
         db.session.commit()
 
