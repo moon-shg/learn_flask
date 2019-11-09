@@ -87,6 +87,8 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     # 用户头像hash值
     avatar_hash = db.Column(db.String(32))
+    #用户投稿POST
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
 
     # 定义用户的默认角色
     def __init__(self, **kwargs):
@@ -177,13 +179,22 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
-
+# 匿名用户（未登录用户）
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
         return False
 
     def is_administrator(self):
         return False
+
+
+# 博客POST模型
+class Post(db.Model):
+	__tablename__ = 'posts'
+	id = db.Column(db.Integer, primary_key=True)
+	body = db.Column(db.Text)
+	timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+	author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 
 login_manager.anonymous_user = AnonymousUser

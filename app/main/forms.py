@@ -45,3 +45,9 @@ class EditProfileAdminForm(FlaskForm):
 		if field.data != self.user.username and \
 			User.query.filter_by(username=field.data).first():
 			raise VaildationError('用户名已存在')
+
+
+# 博客文章表单
+class PostForm(FlaskForm):
+	body = TextAreaField("what's on your mind?", validators=[DataRequired()])
+	submit = SubmitField('提交')

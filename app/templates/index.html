@@ -5,23 +5,35 @@
 
 {% block page_content %}
 <div class="page-header">
-	<h1>你好，
 	{% if current_user.is_authenticated %}
-		{{ current_user.username }}
+		<h1>你好，{{ current_user.username }}!</h1>
+		<p>欢迎回来！</p>
 	{% else %}
-		陌生人
-	{% endif %}!</h1>
-	{% if not known %}
-	<p>非常高兴见到你！</p>
-	{% else %}
-	<p>欢迎回来！</p>
+		<h1>你好，陌生人！</h1>
+		<p>很高兴见到你！</p>
 	{% endif %}
 </div>
+{% if current_user.can(Permission.WRITE) %}
 	{{ wtf.quick_form(form) }}
+{% endif %}
+<div>
+	<ul class="post">
+		{% for post in posts %}
+		<li class="post">
+			<div class="profile-thumbnail">
+				<a href="{{ url_for('.user', username=current_user.username) }}">
+				<img class="img-rounded profile-thumbnail" src="{{ post.author.gravatar(size=40)}}" alt="">
+				</a>	
+			</div>
+			<div class="post-date">{{ moment(post.timestamp).fromNow()}}</div>
+			<div class="post-author">
+				<a href="{{ url_for('.user', username=post.author.username)}}">
+					{{ post.author.username }}
+				</a>
+			</div>
+			<div class="post-body">{{ post.body }}</div>
+		</li>
+		{% endfor %}
+	</ul>
 </div>
-<div class="time" style="float = left">
-	<p>当地时间为 {{ moment(current_time).format('YYYY年M月D日, h:mm:ss a')}}.</p>
-	<p>That was {{ moment(current_time).fromNow(refresh=True) }}</p>
-</div>
-
 {% endblock %}
