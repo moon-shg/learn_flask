@@ -37,6 +37,7 @@ def index():
 def user(username):
 	user = User.query.filter_by(username=username).first_or_404()
 	return render_template('user.html', user=user)
+<<<<<<< HEAD
 
 # 编辑个人资料页面路由
 @main.route('/edit-profile', methods=['GET','POST'])
