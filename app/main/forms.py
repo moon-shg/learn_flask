@@ -1,9 +1,17 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, TextAreaField
+from wtforms.validators import DataRequired, Length
 
 #创建一个表单
 class NameForm(FlaskForm):
 	# Validator 为验证函数组成的列表，其中DataRequired（）函数确保提交内容不为空
 	name = StringField("你的名字是？", validators=[DataRequired()])
 	submit = SubmitField('确认')
+
+
+# 资料编辑表单
+class EditProfileForm(FlaskForm):
+	name = StringField('真实姓名', validators=[Length(0,64)])
+	location = StringField('居住地址', validators=[Length(0,64)])
+	about_me = TextAreaField('个人简介')
+	submit = SubmitField('提交')
