@@ -2,8 +2,9 @@ from . import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, AnonymousUserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from flask import current_app
+from flask import current_app, request
 from datetime import datetime
+import hashlib
 
 
 class Permission:
@@ -78,12 +79,14 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     # 账户认证状态
     confirmed = db.Column(db.Boolean, default=False)
-    #用户信息
+    # 用户信息
     name = db.Column(db.String(64))
     location = db.Column(db.String(64))
     about_me = db.Column(db.Text())
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+    # 用户头像hash值
+    avatar_hash = db.Column(db.String(32))
 
     # 定义用户的默认角色
     def __init__(self, **kwargs):
@@ -94,6 +97,9 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(name='Administrator').first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
+        # 读取用户头像hash值
+        if self.email is not None and self.avatar_hash is not None:
+        	self.avatar_hash = self.gravatar_hash()
 
     # 检查用户是否有指定权限
     def can(self, perm):
@@ -156,6 +162,15 @@ class User(UserMixin, db.Model):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
         db.session.commit()
+
+    # 生成用户头像
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        url = 'https://cdn.v2ex.com/gravatar/'
+        hash = self.avatar_hash or self.gravatar_hash()
+        return f'{url}/{hash}?s={size}&d={default}&r={rating}'
+
+    def gravatar_hash(self):
+    	return hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
 
 
     # 设置print()函数的输出格式
