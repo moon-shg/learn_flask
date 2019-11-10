@@ -36,9 +36,38 @@ div.post-content{
 	min-height: 48px
 }
 
+div.post-footer{
+	text-align: right;
+}
+
 div.pagination{
 	width: 100%;
 	text-align: center;
 	padding: 0px;
 	margin:0px;
+}
+
+div.flask-page-down-preview{
+	margin: 10px, auto;
+	border:1px solid #e0e0e0;
+	padding: 4px;
+}
+div.flask-page-down-preview h1{
+	font-size: 140%;
+}
+div.flask-page-down-preview h2{
+	font-size: 130%;
+}
+div.flask-page-down-preview h3{
+	font-size: 120%;
+}
+
+.post-body h1{
+	font-size: 140%;
+}
+.post-body h2{
+	font-size: 130%;
+}
+.post-body h3{
+	font-size: 120%;
 }
