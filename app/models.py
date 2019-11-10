@@ -27,6 +27,7 @@ class Role(db.Model):
         super(Role, self).__init__(**kwargs)
         if self.permissions is None:
             self.permissions = 0
+        self.insert_roles()
 
     # Role模型中管理权限的方法
     def add_permission(self, perm):
