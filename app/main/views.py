@@ -85,3 +85,9 @@ def edit_profile_admin(id):
 	form.about_me.data = user.about_me
 	return render_template('edit_profile.html', form=form, user=user)
 
+# 为文章提供固定链接
+@main.route('/post/<int:id>')
+def post(id):
+	post = Post.query.get_or_404(id)
+	#虽然posts只有一个元素，但这里还是传递一个列表，这样就能够复用_posts.html来渲染post.html了
+	return render_template('post.html', posts=[post]) 

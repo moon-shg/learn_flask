@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, TextAreaField, BooleanField, SelectField
-from wtforms.validators import DataRequired, Length, Email, Regexp
+from wtforms.validators import DataRequired, Length, Email, Regexp, Required
 from ..models import User, Role 
+from flask_pagedown.fields import PageDownField
 
 #创建一个表单
 class NameForm(FlaskForm):
@@ -49,5 +50,5 @@ class EditProfileAdminForm(FlaskForm):
 
 # 博客文章表单
 class PostForm(FlaskForm):
-	body = TextAreaField("what's on your mind?", validators=[DataRequired()])
+	body = PageDownField("what's on your mind?", validators=[Required()])
 	submit = SubmitField('提交')
