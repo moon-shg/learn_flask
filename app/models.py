@@ -90,8 +90,15 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     # 用户头像hash值
     avatar_hash = db.Column(db.String(32))
-    #用户投稿POST
+    # 用户投稿POST
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    # 用户关注关系
+    followed = db.relationship('Follow', foreign_keys=[Follow.follower_id], 
+        backref=db.backref('follower', lazy='joined'), lazy='dynamic',
+        cascade='all, delete-orphan')
+    follower = db.relationship('Follow', foreign_keys=[Follow.followed_id],
+        backref=db.backref('followed', lazy='joined'), lazy='dynamic',
+        cascade='all, delete-orphan')
 
     # 定义用户的默认角色
     def __init__(self, **kwargs):
@@ -177,6 +184,26 @@ class User(UserMixin, db.Model):
     def gravatar_hash(self):
     	return hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
 
+    #关注关系中的辅助方法
+    def follow(self, user):
+        if not self.is_following(user):
+            f = Follow(follower=self, followed=user)
+            db.session.add(f)
+
+    def unfollow(self, user):
+        f = Follow.query.filter_by(follower_id=user.id).first()
+        if f:
+            db.session.delete(f)
+
+    def is_following(self, user):
+        if user.id is None:
+            return False
+        return self.followed.query.filter_by(followed.id=user.id).first() is not None
+
+    def is_followed_by(self, user):
+        if user.id is None:
+            return False
+        return self.follower.query.filter_by(follower_id=user.id).first() is not None
 
     # 设置print()函数的输出格式
     def __repr__(self):
@@ -217,5 +244,10 @@ class Post(db.Model):
 db.event.listen(Post.body, 'set', Post.on_changed_body)
 
 
-
+# 关注关系中的关联表的模型
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(db,Integer, db.ForeignKey('users.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
