@@ -5,6 +5,8 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app, request
 from datetime import datetime
 import hashlib
+from markdown import markdown
+import bleach
 
 
 class Permission:
@@ -27,6 +29,7 @@ class Role(db.Model):
         super(Role, self).__init__(**kwargs)
         if self.permissions is None:
             self.permissions = 0
+        self.insert_roles()
 
     # Role模型中管理权限的方法
     def add_permission(self, perm):
@@ -87,6 +90,8 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     # 用户头像hash值
     avatar_hash = db.Column(db.String(32))
+    #用户投稿POST
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
 
     # 定义用户的默认角色
     def __init__(self, **kwargs):
@@ -177,7 +182,7 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User %r>' % self.username
 
-
+# 匿名用户（未登录用户）
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
         return False
@@ -185,11 +190,32 @@ class AnonymousUser(AnonymousUserMixin):
     def is_administrator(self):
         return False
 
-
 login_manager.anonymous_user = AnonymousUser
-
 
 # 加载用户的函数
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+# 博客POST模型
+class Post(db.Model):
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    @staticmethod
+    def on_changed_body(target, value, oldvalue, initiator):
+        allow_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em',
+                    'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1', 'h2', 'h3', 'p']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'), tags=allow_tags, strip=True))
+
+db.event.listen(Post.body, 'set', Post.on_changed_body)
+
+
+
+
