@@ -16,6 +16,11 @@ class Permission:
     MODERATE = 8
     ADMIN = 16
 
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -198,7 +203,7 @@ class User(UserMixin, db.Model):
     def is_following(self, user):
         if user.id is None:
             return False
-        return self.followed.query.filter_by(followed.id=user.id).first() is not None
+        return self.followed.query.filter_by(followed_id=user.id).first() is not None
 
     def is_followed_by(self, user):
         if user.id is None:
@@ -242,12 +247,3 @@ class Post(db.Model):
             markdown(value, output_format='html'), tags=allow_tags, strip=True))
 
 db.event.listen(Post.body, 'set', Post.on_changed_body)
-
-
-# 关注关系中的关联表的模型
-class Follow(db.Model):
-    __tablename__ = 'follows'
-    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    followed_id = db.Column(db,Integer, db.ForeignKey('users.id'), primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
