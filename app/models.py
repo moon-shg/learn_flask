@@ -101,7 +101,7 @@ class User(UserMixin, db.Model):
     followed = db.relationship('Follow', foreign_keys=[Follow.follower_id], 
         backref=db.backref('follower', lazy='joined'), lazy='dynamic',
         cascade='all, delete-orphan')
-    follower = db.relationship('Follow', foreign_keys=[Follow.followed_id],
+    followers = db.relationship('Follow', foreign_keys=[Follow.followed_id],
         backref=db.backref('followed', lazy='joined'), lazy='dynamic',
         cascade='all, delete-orphan')
 
@@ -196,19 +196,19 @@ class User(UserMixin, db.Model):
             db.session.add(f)
 
     def unfollow(self, user):
-        f = Follow.query.filter_by(follower_id=user.id).first()
+        f = Follow.query.filter_by(followed_id=user.id).first()
         if f:
             db.session.delete(f)
 
     def is_following(self, user):
         if user.id is None:
             return False
-        return self.followed.query.filter_by(followed_id=user.id).first() is not None
+        return self.followed.filter_by(followed_id=user.id).first() is not None
 
     def is_followed_by(self, user):
         if user.id is None:
             return False
-        return self.follower.query.filter_by(follower_id=user.id).first() is not None
+        return self.follower.filter_by(follower_id=user.id).first() is not None
 
     # 设置print()函数的输出格式
     def __repr__(self):
