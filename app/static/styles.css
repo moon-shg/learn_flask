@@ -47,18 +47,18 @@ div.pagination{
 	margin:0px;
 }
 
-div.flask-page-down-preview{
+div.flask-pagedown-preview{
 	margin: 10px, auto;
 	border:1px solid #e0e0e0;
 	padding: 4px;
 }
-div.flask-page-down-preview h1{
+div.flask-pagedown-preview h1{
 	font-size: 140%;
 }
-div.flask-page-down-preview h2{
+div.flask-pagedown-preview h2{
 	font-size: 130%;
 }
-div.flask-page-down-preview h3{
+div.flask-pagedown-preview h3{
 	font-size: 120%;
 }
 

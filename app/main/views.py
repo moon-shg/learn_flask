@@ -85,9 +85,26 @@ def edit_profile_admin(id):
 	form.about_me.data = user.about_me
 	return render_template('edit_profile.html', form=form, user=user)
 
-# 为文章提供固定链接
+# 为博客提供固定链接
 @main.route('/post/<int:id>')
 def post(id):
 	post = Post.query.get_or_404(id)
 	#虽然posts只有一个元素，但这里还是传递一个列表，这样就能够复用_posts.html来渲染post.html了
 	return render_template('post.html', posts=[post]) 
+
+# 编辑博客路由
+@main.route('/edit/<int:id>', methods=['GET','POST'])
+@login_required
+def edit_post(id):
+	post = Post.query.get_or_404(id)
+	if current_user != post.author and not current_user.can(Permission.ADMIN):
+		abort(403)
+	form = PostForm()
+	if form.validate_on_submit():
+		post.body = form.body.data
+		db.session.add(post)
+		db.session.commit()
+		flash('博客已更新！')
+		return redirect(url_for('.post', id=post.id))
+	form.body.data = post.body
+	return render_template('/edit_post.html', form=form) 
