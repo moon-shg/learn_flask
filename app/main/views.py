@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import render_template, session, redirect, url_for, current_app, flash, request
+from flask import render_template, session, redirect, url_for, current_app, flash, request, make_response
 from . import main
 from .forms import NameForm, EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
@@ -17,13 +17,38 @@ def index():
 		db.session.add(post)
 		db.session.commit()
 		return redirect(url_for('.index'))
-	# 分页显示博客内容
+	
+	# 显示所有博客文章或只显示关注用户的文章
+	show_followed = False
+	if current_user.is_authenticated:
+		show_followed = bool(request.cookies.get('show_followed', ''))
+	if show_followed:
+		query = current_user.followed_posts
+	else:
+		query = Post.query
+		# 分页显示博客内容
 	page = request.args.get('page', 1, type=int)
-	pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+	pagination = query.order_by(Post.timestamp.desc()).paginate(
 		page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], 
 		error_out=False)
 	posts = pagination.items
-	return render_template('index.html', form = form, posts=posts, pagination=pagination)
+	return render_template('index.html', form = form, posts=posts, 
+		show_followed=show_followed, pagination=pagination)
+
+# 查询所有博客文章posts
+@main.route('/all')
+@login_required
+def show_all():
+	resp = make_response(redirect(url_for('.index')))
+	resp.set_cookie('show_followed', '', max_age=30*24*60*60) #cookie 有效期为30天
+	return resp
+# 查询所关注用户的文章
+@main.route('/followed')
+@login_required
+def show_followed():
+	resp = make_response(redirect(url_for('.index')))
+	resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+	return resp
 
 # 个人主页路由
 @main.route('/user/<username>')
@@ -155,7 +180,7 @@ def followers(username):
 	page = request.args.get('page', 1, type=int)
 	pagination = user.followers.paginate(page, 
 		per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'], error_out=False)
-	follows = [{ 'user': item.follower, 'timestamp':item.timestamp} \
+	follows = [{ 'user': item.followers, 'timestamp':item.timestamp} \
 		for item in pagination.items]
 	return render_template('followers.html', user=user, title="的粉丝", 
 		endpoint='.followers', pagination=pagination, follows=follows)

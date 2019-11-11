@@ -16,6 +16,7 @@ class Permission:
     MODERATE = 8
     ADMIN = 16
 
+# 关注关系中关联表的模型实现
 class Follow(db.Model):
     __tablename__ = 'follows'
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
@@ -34,7 +35,6 @@ class Role(db.Model):
         super(Role, self).__init__(**kwargs)
         if self.permissions is None:
             self.permissions = 0
-        self.insert_roles()
 
     # Role模型中管理权限的方法
     def add_permission(self, perm):
@@ -99,14 +99,15 @@ class User(UserMixin, db.Model):
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     # 用户关注关系
     followed = db.relationship('Follow', foreign_keys=[Follow.follower_id], 
-        backref=db.backref('follower', lazy='joined'), lazy='dynamic',
+        backref=db.backref('followers', lazy='joined'), lazy='dynamic',
         cascade='all, delete-orphan')
     followers = db.relationship('Follow', foreign_keys=[Follow.followed_id],
         backref=db.backref('followed', lazy='joined'), lazy='dynamic',
         cascade='all, delete-orphan')
 
-    # 定义用户的默认角色
+    
     def __init__(self, **kwargs):
+    	# 定义用户的默认角色
         # 先调用基类构造函数，如果创建基类对象后还没有定义角色，就根据电子邮箱地址来决定将其设为管理员还是默认角色
         super(User, self).__init__(**kwargs)
         if self.role is None:
@@ -117,6 +118,8 @@ class User(UserMixin, db.Model):
         # 读取用户头像hash值
         if self.email is not None and self.avatar_hash is not None:
         	self.avatar_hash = self.gravatar_hash()
+        # 创建用户时,将自己设置为关注者
+        self.follow(self)
 
     # 检查用户是否有指定权限
     def can(self, perm):
@@ -192,11 +195,11 @@ class User(UserMixin, db.Model):
     #关注关系中的辅助方法
     def follow(self, user):
         if not self.is_following(user):
-            f = Follow(follower=self, followed=user)
+            f = Follow(followers=self, followed=user)
             db.session.add(f)
 
     def unfollow(self, user):
-        f = Follow.query.filter_by(followed_id=user.id).first()
+        f = self.followed.filter_by(followed_id=user.id).first()
         if f:
             db.session.delete(f)
 
@@ -208,7 +211,22 @@ class User(UserMixin, db.Model):
     def is_followed_by(self, user):
         if user.id is None:
             return False
-        return self.follower.filter_by(follower_id=user.id).first() is not None
+        return self.followers.filter_by(follower_id=user.id).first() is not None
+
+    # 获取所关注用户的博客post
+    @property
+    def followed_posts(self):
+    	return Post.query.join(Follow, Follow.followed_id==Post.author_id).\
+    		filter(Follow.follower_id==self.id)
+
+    # 把用户设为自己的关注者
+    @staticmethod
+    def add_self_follows():
+    	for user in User.query.all():
+    		if not user.is_followed_by(user):
+    			user.follow(user)
+    			db.session.add(user)
+    			db.session.commit()
 
     # 设置print()函数的输出格式
     def __repr__(self):
@@ -245,5 +263,6 @@ class Post(db.Model):
                     'i', 'li', 'ol', 'pre', 'strong', 'ul', 'h1', 'h2', 'h3', 'p']
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format='html'), tags=allow_tags, strip=True))
+
 
 db.event.listen(Post.body, 'set', Post.on_changed_body)
