@@ -34,5 +34,9 @@ def create_app(config_name):
 	#添加密码验证的蓝本
         from .auth import auth as auth_blueprint
         app.register_blueprint(auth_blueprint, url_prefix='/auth')   # 添加指定前缀 /auth
+        
+        #添加API的蓝本
+        from .api import api as api_blueprint
+        app.register_blueprint(api_blueprint, url_prefix='/api/v1')
 
         return app
